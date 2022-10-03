@@ -15,25 +15,45 @@ var upgrader = websocket.Upgrader{
 	WriteBufferSize: 1024,
 	CheckOrigin:     func(r *http.Request) bool { return true },
 }
+
 var count = 0
 
+//var arr []*websocket.Conn
+var clients = make(map[*websocket.Conn]int) // connected clients
+var broadcast = make(chan Message)          // broadcast channel
+type Message struct {
+	Id      int
+	Message string
+}
+
 func reader(conn *websocket.Conn) {
+	clients[conn] = count
+	fmt.Println(clients)
+	err := conn.WriteMessage(1, []byte("Hi Client!"+strconv.Itoa(clients[conn])))
+	if err != nil {
+		log.Println(err)
+	}
 	for {
 		// read in a message
-		messageType, p, err := conn.ReadMessage()
+		var p Message
+		_, p.Message, err := conn.ReadMessage(p.Message)
 		if err != nil {
 			log.Println(err)
+			count--
 			return
 		}
-		var name int = count
+
+		//var name int = count
 		// print out that message for clarity
-		log.Println("Client" + strconv.Itoa(name) + " " + string(p))
-
-		if err := conn.WriteMessage(messageType, p); err != nil {
-			log.Println(err)
-			return
+		//log.Println("Client" + strconv.Itoa(clients[conn]) + " " + string(p))
+		for cli := range clients {
+			if err := cli.WriteMessage(websocket.TextMessage, []byte(p.Message)); err != nil {
+				log.Println(err)
+				cli.Close()
+				delete(clients, cli)
+				return
+			}
 		}
-
 	}
 }
 
@@ -47,15 +67,17 @@ func wsEndpoint(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Println(err)
 	}
-
-	log.Println("Client Connected")
+	defer ws.Close()
+	/* 	log.Println("Client Connected")
+	   	arr = append(arr, ws)
+	   	count++
+	   	fmt.Println(arr)
+	   	var name int = count
+	   	err = ws.WriteMessage(1, []byte("Hi Client!"+strconv.Itoa(name)))
+	   	if err != nil {
+	   		log.Println(err)
+	   	} */
 	count++
-	var name int = count
-	err = ws.WriteMessage(1, []byte("Hi Client!"+strconv.Itoa(name)))
-	if err != nil {
-		log.Println(err)
-	}
-
 	reader(ws)
 }
 
@@ -69,7 +91,3 @@ func main() {
 	setupRoutes()
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }
-
-// cach hien tai : tao 1 channel
-// luu thong tin message trong channel
-// client loi message trong channel ra

@@ -14,10 +14,12 @@ import (
 
 var addr = flag.String("addr", "localhost:8080", "http service address")
 
-func main() {
-	interrupt := make(chan os.Signal, 1)
-	signal.Notify(interrupt, os.Interrupt)
+type Msg struct {
+	Id      int
+	Message string
+}
 
+func main() {
 	u := url.URL{Scheme: "ws", Host: *addr, Path: "/ws"}
 	log.Printf("connecting to %s", u.String())
 
@@ -27,8 +29,12 @@ func main() {
 	}
 	log.Println("client connect success")
 	defer c.Close()
+	client(c)
+}
+func client(c *websocket.Conn) {
+	interrupt := make(chan os.Signal, 1)
+	signal.Notify(interrupt, os.Interrupt)
 	done := make(chan struct{})
-
 	go func() {
 		defer close(done)
 		for {
@@ -40,7 +46,7 @@ func main() {
 			log.Printf("receive %s", message)
 		}
 	}()
-	a := make(chan string, 1)
+	a := make(chan string)
 	var msg string
 	go func() {
 		for {
