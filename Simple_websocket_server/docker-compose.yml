@@ -1,0 +1,36 @@
+version: "3"
+services:
+  db:
+    image: postgres:14.1-alpine
+    container_name: db
+    restart: always
+    env_file:
+      - ./environment/db.env
+    networks:
+      - chat_network
+    ports:
+      - 5432:5432
+    volumes:
+      - ./data:/var/lib/postgresql/data
+      - ./database/createtable.sql:/docker-entrypoint-initdb.d/createtable.sql
+  server:
+    build:
+      context: ./
+      dockerfile: Dockerfile
+    image: server:version1.9
+    container_name: server
+    restart: always
+    env_file:
+      - ./environment/db.env
+    networks:
+      - chat_network
+    ports:
+      - "8080:8080"
+    depends_on:
+      - db
+    volumes:
+      - ~/rooms.txt:/server/room.txt
+    entrypoint: ["/server/wait-for.sh", "db:5432", "--","/server/start.sh"]
+    command: ["/server/main"]		
+networks:
+  chat_network:

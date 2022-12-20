@@ -1,0 +1,6 @@
+version1.5 : ko có gì thay đổi
+version1.6 : thêm đọc và ghi file -> từ đó tạo các room mặc định đã được ghi sẵn trong file room.txt 
+version1.7 : fix lai phan khoi tao user 'system' , room mac dinh , khi thay doi file txt => khoi dong lai server -> tao ra cac room moi theo file txt
+version1.8 : thêm chức năng ghi vào file.txt room_name đã được khởi tạo khi server còn đang chạy -> từ đó biết được thông tin room đã được tạo trong database
+version1.9 : fix lai phan tao room
+version2.0 : ban chua tat ca thanh phan de chay 1 ung dung ( package, tool , ...)
